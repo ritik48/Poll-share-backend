@@ -1,8 +1,13 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
+	name: {
+		type: String,
+		required: true,
+	},
 	username: {
 		type: String,
 		required: true,
@@ -17,6 +22,22 @@ const userSchema = new Schema({
 		type: String,
 		required: true,
 	},
+});
+
+userSchema.methods.isPasswordValid = async function (password) {
+	const verify = await bcrypt.compare(password, this.password);
+	console.log("verify = ", verify);
+	return verify;
+};
+
+userSchema.pre("save", async function (next) {
+	if (!this.isModified("password")) {
+		return next();
+	}
+	const passwordHash = await bcrypt.hash(this.password, 10);
+	this.password = passwordHash;
+
+	next();
 });
 
 const User = mongoose.model("user", userSchema);
