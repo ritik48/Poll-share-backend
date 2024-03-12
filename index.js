@@ -6,6 +6,7 @@ dotenv.config();
 
 import { userRouter } from "./routes/user.js";
 import { connectDB } from "./db/db.js";
+import { pollRouter } from "./routes/poll.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/", userRouter);
+app.use("/poll", pollRouter);
 
 app.use((err, req, res, next) => {
 	const { status = 500, message = "Something went wrong" } = err;

@@ -2,35 +2,34 @@ import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
 
-const pollSchema = new Schema({
-	title: {
-		type: String,
-		required: true,
-	},
-	options: {
-		type: [String],
-		required: true,
-	},
-	votes: {
-		type: Map, // Using Map to store key-value pairs
-		of: Number, // Value type is Number, representing vote counts
-		default: new Map(), // Default to an empty Map
-	},
-	comments: [
-		{
-			type: Schema.Types.ObjectId,
-			ref: "Comment",
+const pollSchema = new Schema(
+	{
+		title: {
+			type: String,
+			required: true,
 		},
-	],
-	user: {
-		type: Schema.Types.ObjectId,
-		ref: "User",
+		options: {
+			type: [String],
+			required: true,
+		},
+		votes: {
+			type: Map, // Using Map to store key-value pairs
+			of: Number, // Value type is Number, representing vote counts
+			default: new Map(), // Default to an empty Map
+		},
+		comments: [
+			{
+				type: Schema.Types.ObjectId,
+				ref: "comment",
+			},
+		],
+		user: {
+			type: Schema.Types.ObjectId,
+			ref: "user",
+		},
 	},
-	createdAt: {
-		type: Date,
-		default: Date.now,
-	},
-});
+	{ timestamps: true }
+);
 
 const Poll = mongoose.model("Poll", pollSchema);
 
