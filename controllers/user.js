@@ -23,12 +23,16 @@ const loginUser = async (req, res, next) => {
 	const accessToken = generateAccessToken(user);
 	const options = { httpOnly: true, secure: true };
 
+	const userWithoutPassword = Object.assign({}, user.toJSON());
+	delete userWithoutPassword.password;
+
 	res
 		.status(200)
 		.cookie("token", accessToken, options)
 		.json({
 			message: `You are logged in, ${user.name}`,
 			token: accessToken,
+			user: userWithoutPassword,
 		});
 };
 
@@ -59,8 +63,7 @@ const createUser = async (req, res, next) => {
 
 const logoutUser = async (req, res, next) => {
 	const options = { httpOnly: true, secure: true };
-	res
-		.status(200)
+	res.status(200)
 		.clearCookie("token", options)
 		.json({ message: "User logged out successfully" });
 };
