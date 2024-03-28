@@ -25,19 +25,19 @@ app.use("/", userRouter);
 app.use("/poll", pollRouter);
 
 app.use((err, req, res, next) => {
-	const { status = 500, message = "Something went wrong" } = err;
-	res.status(status).json({
-		message,
-	});
+    const { status = 500, message = "Something went wrong" } = err;
+    res.status(status).json({
+        message,
+    });
 });
 
 connectDB()
-	.then(() => {
-		app.listen(3000, () => {
-			console.log("Listening on port 3000...");
-		});
-	})
-	.catch((err) => {
-		console.log("Cannot connect to databse ", err);
-		process.exit(1);
-	});
+    .then(() => {
+        app.listen(3000, () => {
+            console.log("Listening on port 3000...");
+        });
+    })
+    .catch((err) => {
+        console.log("Cannot connect to databse ", err);
+        process.exit(1);
+    });
