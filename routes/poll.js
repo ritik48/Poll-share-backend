@@ -13,6 +13,6 @@ const pollRouter = express.Router();
 pollRouter.get("/", asyncHandler(fetchAllPolls));
 pollRouter.post("/new", isAuthenticated, asyncHandler(createPoll));
 pollRouter.get("/:id", asyncHandler(fetchPoll));
-pollRouter.post("/vote/:id", asyncHandler(voteOption));
+pollRouter.post("/vote/:id", isAuthenticated, asyncHandler(voteOption));
 
 export { pollRouter };

@@ -25,6 +25,17 @@ const userSchema = new Schema({
     avatar: {
         type: String,
     },
+    vote: [
+        {
+            poll_id: {
+                type: Schema.Types.ObjectId,
+                ref: "Poll",
+            },
+            poll_choice: {
+                type: Number,
+            },
+        },
+    ],
 });
 
 userSchema.methods.isPasswordValid = async function (password) {

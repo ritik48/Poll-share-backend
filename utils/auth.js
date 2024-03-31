@@ -6,7 +6,7 @@ import { asyncHandler } from "./asyncHandler.js";
 
 const isAuthenticated = asyncHandler(async (req, res, next) => {
     const token = req.cookies.token;
-    console.log("token here = ", token);
+
     if (!token) {
         throw new ApiError("You are not logged in !!!", 401);
     }
@@ -19,7 +19,7 @@ const isAuthenticated = asyncHandler(async (req, res, next) => {
     }
 
     const user = await User.findById(verifyToken.userId);
-    console.log(user);
+    // console.log(user);
 
     if (!user) {
         throw new ApiError("Invalid Access Token", 401);
