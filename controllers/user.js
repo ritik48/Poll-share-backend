@@ -46,6 +46,10 @@ const loginUser = async (req, res, next) => {
 const createUser = async (req, res, next) => {
     const { name, username, email, password } = req.body;
 
+    if ([name, username, password, email].some((e) => !e)) {
+        throw new ApiError("You have to provide all the fields", 400);
+    }
+
     //check if user already exists or not
     const userExist = await User.findOne({
         $or: [{ username }, { email }],
@@ -63,8 +67,12 @@ const createUser = async (req, res, next) => {
         password,
     });
 
+    console.log(user);
+
     res.status(201).json({
         message: "User created successfully",
+        success: true,
+        user,
     });
 };
 
