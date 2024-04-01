@@ -32,9 +32,9 @@ const createPoll = async (req, res, next) => {
         throw new ApiError("Please provide at least two options", 401);
     }
 
-    await Poll.create({ title, options, user: req.user._id });
+    const poll = await Poll.create({ title, options, user: req.user._id });
 
-    res.status(201).json({ message: "Poll created successfully." });
+    res.status(201).json({ message: "Poll created successfully.", poll });
 };
 
 const voteOption = async (req, res, next) => {
