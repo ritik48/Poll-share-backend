@@ -21,6 +21,16 @@ const fetchPoll = async (req, res, next) => {
     res.status(200).json({ poll });
 };
 
+export const deletePoll = async (req, res, next) => {
+    const { id } = req.params;
+    await Poll.findByIdAndDelete(id);
+
+    res.status(200).json({
+        success: true,
+        message: "Poll deleted successfully",
+    });
+};
+
 // CREATE A NEW POLL
 const createPoll = async (req, res, next) => {
     const { title, options } = req.body;
@@ -34,7 +44,11 @@ const createPoll = async (req, res, next) => {
 
     const poll = await Poll.create({ title, options, user: req.user._id });
 
-    res.status(201).json({ message: "Poll created successfully.", poll });
+    res.status(201).json({
+        message: "Poll created successfully.",
+        success: true,
+        poll,
+    });
 };
 
 const voteOption = async (req, res, next) => {
