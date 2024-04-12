@@ -67,9 +67,14 @@ const createUser = async (req, res, next) => {
         password,
     });
 
-    console.log(user);
+    const accessToken = generateAccessToken(user);
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+    };
 
-    res.status(201).json({
+    res.status(201).cookie("token", accessToken, options).json({
         message: "User created successfully",
         success: true,
         user,

@@ -30,6 +30,14 @@ const pollSchema = new Schema(
         image: {
             type: String,
         },
+        publishedAt: {
+            type: String,
+            default: () => new Date().toString(),
+        },
+        expiresAt: {
+            type: String,
+            required: true,
+        },
     },
     { timestamps: true }
 );

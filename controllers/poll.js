@@ -33,7 +33,7 @@ export const deletePoll = async (req, res, next) => {
 
 // CREATE A NEW POLL
 const createPoll = async (req, res, next) => {
-    const { title, options } = req.body;
+    const { title, options, expiresAt } = req.body;
 
     if (!title) {
         throw new ApiError("Please provide title for the poll", 401);
@@ -42,8 +42,13 @@ const createPoll = async (req, res, next) => {
         throw new ApiError("Please provide at least two options", 401);
     }
 
-    const poll = await Poll.create({ title, options, user: req.user._id });
-
+    const poll = await Poll.create({
+        title,
+        options,
+        user: req.user._id,
+        expiresAt,
+    });
+    console.log("created = ", poll);
     res.status(201).json({
         message: "Poll created successfully.",
         success: true,
@@ -113,12 +118,14 @@ const voteOption = async (req, res, next) => {
         }
     }
 
-    await poll.save();
+    const updatedPoll = await poll.save();
+    console.log(updatedPoll);
 
     res.status(201).json({
         message: "success",
         success: true,
         user: updatedUser,
+        poll: updatedPoll,
     });
 };
 
