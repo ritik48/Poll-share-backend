@@ -30,6 +30,9 @@ const pollSchema = new Schema(
         image: {
             type: String,
         },
+        category: {
+            type: [String],
+        },
         publishedAt: {
             type: String,
             default: () => new Date().toString(),
