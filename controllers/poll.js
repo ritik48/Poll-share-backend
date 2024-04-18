@@ -1,12 +1,20 @@
+import mongoose from "mongoose";
 import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 
 // GET ALL POLLS
 const fetchAllPolls = async (req, res, next) => {
-    const polls = await Poll.find({}).populate("user", "-password");
+    const polls = await Poll.find({}).populate("user");
 
-    res.status(200).json({ polls });
+    // include virtuals 'formattedVote'
+    const pollsWithVirtuals = [];
+    polls.forEach((poll) => {
+        const p = poll.toObject();
+        pollsWithVirtuals.push({ ...p });
+    });
+
+    res.status(200).json({ polls: pollsWithVirtuals });
 };
 
 // GET POLL BY ID
@@ -18,7 +26,13 @@ const fetchPoll = async (req, res, next) => {
         throw new ApiError("Cannot find this poll", 404);
     }
 
-    res.status(200).json({ poll });
+    // include virtuals 'formattedVote'
+    const p = poll.toObject();
+    let pollsWithVirtuals = { ...p };
+
+    // console.log(pollsWithVirtuals);
+
+    res.status(200).json({ polls: pollsWithVirtuals });
 };
 
 export const deletePoll = async (req, res, next) => {
@@ -64,16 +78,10 @@ const voteOption = async (req, res, next) => {
     if (!id || !choice) {
         throw new ApiError("Invalid response", 401);
     }
-    const poll = await Poll.findById(id);
+    let poll = await Poll.findById(id);
     if (isNaN(parseInt(choice)) || poll.options.length < parseInt(choice)) {
         throw new ApiError("Invalid choice", 401);
     }
-
-    if (!poll.votes.has(choice)) {
-        poll.votes.set(choice, 0);
-    }
-
-    const currentVoteCount = parseInt(poll.votes.get(choice));
 
     const hasVotedBefore = await User.findOne({
         _id: req.user._id,
@@ -89,7 +97,20 @@ const voteOption = async (req, res, next) => {
             { new: true }
         );
 
-        poll.votes.set(choice, currentVoteCount + 1);
+        // Add the users current choice
+        poll = await Poll.findByIdAndUpdate(
+            id,
+            {
+                $push: {
+                    votes: {
+                        option: choice,
+                        votedAt: Date.now(),
+                        user: req.user._id,
+                    },
+                },
+            },
+            { new: true }
+        );
     } else {
         const previousChoice = hasVotedBefore.vote
             .find((v) => v.poll_id.toString() === id)
@@ -103,8 +124,22 @@ const voteOption = async (req, res, next) => {
                 },
                 { new: true }
             );
+            
+            const userId = new mongoose.Types.ObjectId(req.user._id);
 
-            poll.votes.set(choice, currentVoteCount - 1);
+            // Remove the users previous choice
+            poll = await Poll.findByIdAndUpdate(
+                id,
+                {
+                    $pull: {
+                        votes: {
+                            user: userId,
+                        },
+                    },
+                },
+                { new: true }
+            );
+
         } else {
             updatedUser = await User.findOneAndUpdate(
                 { _id: req.user._id, "vote.poll_id": id }, // Find the user and the vote element with the specified poll_id
@@ -112,21 +147,43 @@ const voteOption = async (req, res, next) => {
                 { new: true } // To return the updated document
             );
 
-            const previousVoteCount = parseInt(poll.votes.get(previousChoice));
-            poll.votes.set(previousChoice, previousVoteCount - 1);
+            const userId = new mongoose.Types.ObjectId(req.user._id);
+            
+            // Remove the users previous choice
+            poll = await Poll.findByIdAndUpdate(
+                id,
+                {
+                    $pull: {
+                        votes: {
+                            user: userId,
+                        },
+                    },
+                },
+                { new: true }
+            );
 
-            poll.votes.set(choice, currentVoteCount + 1);
+            // Add the users current choice
+            poll = await Poll.findByIdAndUpdate(
+                id,
+                {
+                    $push: {
+                        votes: {
+                            option: choice,
+                            votedAt: Date.now(),
+                            user: req.user._id,
+                        },
+                    },
+                },
+                { new: true }
+            );
         }
     }
-
-    const updatedPoll = await poll.save();
-    console.log(updatedPoll);
 
     res.status(201).json({
         message: "success",
         success: true,
         user: updatedUser,
-        poll: updatedPoll,
+        poll,
     });
 };
 

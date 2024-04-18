@@ -13,9 +13,21 @@ const pollSchema = new Schema(
             required: true,
         },
         votes: {
-            type: Map, // Using Map to store key-value pairs
-            of: Number, // Value type is Number, representing vote counts
-            default: new Map(), // Default to an empty Map
+            type: [
+                {
+                    option: Number, // Option voted for
+                    votedAt: {
+                        type: Date,
+                        default: Date.now, // Timestamp when the vote was casted
+                    },
+                    user: {
+                        // user who cast the vote
+                        type: Schema.Types.ObjectId,
+                        ref: "user",
+                    },
+                },
+            ],
+            default: [], // Default to an empty array
         },
         comments: [
             {
@@ -34,16 +46,31 @@ const pollSchema = new Schema(
             type: [String],
         },
         publishedAt: {
-            type: String,
-            default: () => new Date().toString(),
+            type: Date,
+            default: Date.now,
         },
         expiresAt: {
-            type: String,
+            type: Date,
             required: true,
         },
     },
     { timestamps: true }
 );
+
+pollSchema.set("toObject", { virtuals: true });
+pollSchema.set("toJson", { virtuals: true });
+
+pollSchema.virtual("formattedVote").get(function () {
+    const votes = {};
+    Array.from({ length: this.options.length }, (_, i) => (votes[i] = 0));
+
+    this.votes.forEach((vote) => {
+        if (votes.hasOwnProperty(vote.option)) {
+            votes[vote.option]++;
+        }
+    });
+    return votes;
+});
 
 const Poll = mongoose.model("Poll", pollSchema);
 
