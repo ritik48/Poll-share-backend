@@ -1,3 +1,4 @@
+import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken } from "../utils/auth.js";
@@ -92,4 +93,20 @@ const logoutUser = async (req, res, next) => {
         .json({ message: "User logged out successfully" });
 };
 
-export { loginUser, createUser, logoutUser, getUser };
+const getUserPolls = async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+        throw new ApiError("User not provided", 401);
+    }
+
+    const polls = await Poll.find({ user: id });
+
+    // include virtuals 'formattedVote'
+
+    let pollsWithVirtuals = polls.map((poll) => poll.toObject());
+
+    res.status(200).json({ success: true, polls: pollsWithVirtuals });
+};
+
+export { loginUser, createUser, logoutUser, getUser, getUserPolls };
