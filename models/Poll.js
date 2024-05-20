@@ -29,6 +29,12 @@ const pollSchema = new Schema(
             ],
             default: [], // Default to an empty array
         },
+        views: {
+            type: Number,
+        },
+        status: {
+            type: String,
+        },
         comments: [
             {
                 type: Schema.Types.ObjectId,
