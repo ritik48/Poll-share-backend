@@ -109,4 +109,30 @@ const getUserPolls = async (req, res, next) => {
     res.status(200).json({ success: true, polls: pollsWithVirtuals });
 };
 
-export { loginUser, createUser, logoutUser, getUser, getUserPolls };
+const userStats = async (req, res, next) => {
+    // get total votes, views and total polls
+    let user_polls_stats = await Poll.aggregate([
+        {
+            $match: {
+                user: req.user._id,
+            },
+        },
+        {
+            $group: {
+                _id: null,
+                totalVotes: { $sum: { $size: "$votes" } },
+                totalViews: { $sum: "$views" },
+                totalPolls: { $sum: 1 },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+            },
+        },
+    ]);
+
+    res.status(200).json({ success: true, data: user_polls_stats });
+};
+
+export { loginUser, createUser, logoutUser, getUser, getUserPolls, userStats };

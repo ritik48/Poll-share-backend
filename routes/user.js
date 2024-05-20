@@ -6,6 +6,7 @@ import {
     logoutUser,
     getUser,
     getUserPolls,
+    userStats,
 } from "../controllers/user.js";
 import { isAuthenticated } from "../utils/auth.js";
 
@@ -18,6 +19,7 @@ userRouter.get("/secret", isAuthenticated, (req, res) => {
     const { name } = req.user;
     res.json({ message: `you are logged in, ${name}` });
 });
+userRouter.get("/stats", isAuthenticated, userStats);
 userRouter.get("/logout", isAuthenticated, logoutUser);
 userRouter.get("/getUser", isAuthenticated, asyncHandler(getUser));
 
