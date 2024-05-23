@@ -32,7 +32,7 @@ const pollSchema = new Schema(
         views: {
             type: Number,
         },
-        status: {
+        poll_status: {
             type: String,
         },
         comments: [

@@ -30,8 +30,6 @@ const fetchPoll = async (req, res, next) => {
     const p = poll.toObject();
     let pollsWithVirtuals = { ...p };
 
-    // console.log(pollsWithVirtuals);
-
     res.status(200).json({ polls: pollsWithVirtuals });
 };
 
@@ -47,7 +45,9 @@ export const deletePoll = async (req, res, next) => {
 
 // CREATE A NEW POLL
 const createPoll = async (req, res, next) => {
-    const { title, options, expiresAt, category } = req.body;
+    const { title, options, expiresAt, category, status } = req.body;
+
+    const poll_visibility = status ? "private" : "public";
 
     if (!title) {
         throw new ApiError("Please provide title for the poll", 401);
@@ -62,8 +62,9 @@ const createPoll = async (req, res, next) => {
         user: req.user._id,
         expiresAt,
         category,
+        poll_status: poll_visibility,
     });
-    console.log("created = ", poll);
+  
     res.status(201).json({
         message: "Poll created successfully.",
         success: true,
@@ -124,7 +125,7 @@ const voteOption = async (req, res, next) => {
                 },
                 { new: true }
             );
-            
+
             const userId = new mongoose.Types.ObjectId(req.user._id);
 
             // Remove the users previous choice
@@ -139,7 +140,6 @@ const voteOption = async (req, res, next) => {
                 },
                 { new: true }
             );
-
         } else {
             updatedUser = await User.findOneAndUpdate(
                 { _id: req.user._id, "vote.poll_id": id }, // Find the user and the vote element with the specified poll_id
@@ -148,7 +148,7 @@ const voteOption = async (req, res, next) => {
             );
 
             const userId = new mongoose.Types.ObjectId(req.user._id);
-            
+
             // Remove the users previous choice
             poll = await Poll.findByIdAndUpdate(
                 id,

@@ -132,7 +132,7 @@ const userStats = async (req, res, next) => {
         },
     ]);
 
-    res.status(200).json({ success: true, data: user_polls_stats });
+    res.status(200).json({ success: true, data: user_polls_stats[0] });
 };
 
 export { loginUser, createUser, logoutUser, getUser, getUserPolls, userStats };
