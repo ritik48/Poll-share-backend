@@ -78,6 +78,12 @@ pollSchema.virtual("formattedVote").get(function () {
     return votes;
 });
 
+pollSchema.virtual("isLive").get(function () {
+    const isPollLive = this.expiresAt > new Date();
+
+    return isPollLive;
+});
+
 const Poll = mongoose.model("Poll", pollSchema);
 
 export { Poll };
