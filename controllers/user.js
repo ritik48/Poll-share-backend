@@ -96,40 +96,68 @@ const logoutUser = async (req, res, next) => {
 
 const getUserPolls = async (req, res, next) => {
     const { id } = req.params;
-    const { q, visibility } = req.query;
+    const { q, visibility, limit, offset } = req.query;
 
     if (!id) {
         throw new ApiError("User not provided", 401);
     }
-    
+
     let visibilityQuery = {};
     if (visibility !== "all") {
         visibilityQuery.poll_status = visibility;
     }
 
-    // Fetch polls based on (private, public, closed and active)
+    // Fetch polls and totalPolls based on (private, public, closed and active)
 
+    let totalPolls;
     let polls;
-    if (q === "all")
-        polls = await Poll.find({ user: id, ...visibilityQuery });
-    else if (q === "active") {
+    if (q === "all") {
+        polls = await Poll.find({ user: id, ...visibilityQuery })
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            user: id,
+            ...visibilityQuery,
+        }).countDocuments();
+    } else if (q === "active") {
         polls = await Poll.find({
             user: id,
             expiresAt: { $gt: new Date() },
-            ...visibilityQuery
-        });
+            ...visibilityQuery,
+        })
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            user: id,
+            expiresAt: { $gt: new Date() },
+            ...visibilityQuery,
+        }).countDocuments();
     } else if (q === "closed") {
         polls = await Poll.find({
             user: id,
             expiresAt: { $lt: new Date() },
-            ...visibilityQuery
-        });
+            ...visibilityQuery,
+        })
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            user: id,
+            expiresAt: { $lt: new Date() },
+            ...visibilityQuery,
+        }).countDocuments();
     }
 
     // include virtuals 'formattedVote'
     let pollsWithVirtuals = polls.map((poll) => poll.toObject());
 
-    res.status(200).json({ success: true, polls: pollsWithVirtuals });
+    res.status(200).json({
+        success: true,
+        polls: pollsWithVirtuals,
+        total: totalPolls,
+    });
 };
 
 const userStats = async (req, res, next) => {
