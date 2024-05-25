@@ -1,3 +1,4 @@
+import { query } from "express";
 import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -95,15 +96,37 @@ const logoutUser = async (req, res, next) => {
 
 const getUserPolls = async (req, res, next) => {
     const { id } = req.params;
+    const { q, visibility } = req.query;
 
     if (!id) {
         throw new ApiError("User not provided", 401);
     }
+    
+    let visibilityQuery = {};
+    if (visibility !== "all") {
+        visibilityQuery.poll_status = visibility;
+    }
 
-    const polls = await Poll.find({ user: id });
+    // Fetch polls based on (private, public, closed and active)
+
+    let polls;
+    if (q === "all")
+        polls = await Poll.find({ user: id, ...visibilityQuery });
+    else if (q === "active") {
+        polls = await Poll.find({
+            user: id,
+            expiresAt: { $gt: new Date() },
+            ...visibilityQuery
+        });
+    } else if (q === "closed") {
+        polls = await Poll.find({
+            user: id,
+            expiresAt: { $lt: new Date() },
+            ...visibilityQuery
+        });
+    }
 
     // include virtuals 'formattedVote'
-
     let pollsWithVirtuals = polls.map((poll) => poll.toObject());
 
     res.status(200).json({ success: true, polls: pollsWithVirtuals });

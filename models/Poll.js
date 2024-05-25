@@ -84,6 +84,12 @@ pollSchema.virtual("isLive").get(function () {
     return isPollLive;
 });
 
+pollSchema.virtual("totalVotes").get(function () {
+    const total = this.votes.length;
+
+    return total;
+});
+
 const Poll = mongoose.model("Poll", pollSchema);
 
 export { Poll };
