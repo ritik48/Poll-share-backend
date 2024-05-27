@@ -179,7 +179,7 @@ const getUserVotedPolls = async (req, res, next) => {
     let totalPolls;
     let polls;
     if (q === "all") {
-        polls = await Poll.find({ "votes.user": id })
+        polls = await Poll.find({ "votes.user": id, ...visibilityQuery })
             .populate("user", "-password")
             .limit(limit)
             .skip(offset);
@@ -226,7 +226,7 @@ const getUserVotedPolls = async (req, res, next) => {
     res.status(200).json({
         success: true,
         polls: pollsWithVirtuals,
-        total: polls.length,
+        total: totalPolls,
     });
 };
 
