@@ -94,7 +94,7 @@ const logoutUser = async (req, res, next) => {
         .json({ message: "User logged out successfully" });
 };
 
-const getUserPolls = async (req, res, next) => {
+const getUserCreatedPolls = async (req, res, next) => {
     const { id } = req.params;
     const { q, visibility, limit, offset } = req.query;
 
@@ -160,6 +160,76 @@ const getUserPolls = async (req, res, next) => {
     });
 };
 
+const getUserVotedPolls = async (req, res, next) => {
+    const { id } = req.params;
+
+    const { q = "all", visibility = "all", limit = 5, offset = 0 } = req.query;
+
+    if (!id) {
+        throw new ApiError("User not provided", 401);
+    }
+
+    let visibilityQuery = {};
+    if (visibility !== "all") {
+        visibilityQuery.poll_status = visibility;
+    }
+
+    // Fetch user voted polls and totalPolls based on (private, public, closed and active)
+
+    let totalPolls;
+    let polls;
+    if (q === "all") {
+        polls = await Poll.find({ "votes.user": id })
+            .populate("user", "-password")
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            "votes.user": id,
+            ...visibilityQuery,
+        }).countDocuments();
+    } else if (q === "active") {
+        polls = await Poll.find({
+            "votes.user": id,
+            expiresAt: { $gt: new Date() },
+            ...visibilityQuery,
+        })
+            .populate("user", "-password")
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            "votes.user": id,
+            expiresAt: { $gt: new Date() },
+            ...visibilityQuery,
+        }).countDocuments();
+    } else if (q === "closed") {
+        polls = await Poll.find({
+            "votes.user": id,
+            expiresAt: { $lt: new Date() },
+            ...visibilityQuery,
+        })
+            .populate("user", "-password")
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            "votes.user": id,
+            expiresAt: { $lt: new Date() },
+            ...visibilityQuery,
+        }).countDocuments();
+    }
+
+    // // include virtuals 'formattedVote'
+    let pollsWithVirtuals = polls.map((poll) => poll.toObject());
+
+    res.status(200).json({
+        success: true,
+        polls: pollsWithVirtuals,
+        total: polls.length,
+    });
+};
+
 const userStats = async (req, res, next) => {
     // get total votes, views and total polls
     let user_polls_stats = await Poll.aggregate([
@@ -178,7 +248,7 @@ const userStats = async (req, res, next) => {
         },
         {
             $project: {
-                _id: 0,
+                _id: 0, // exclude id from result
             },
         },
     ]);
@@ -186,4 +256,12 @@ const userStats = async (req, res, next) => {
     res.status(200).json({ success: true, data: user_polls_stats[0] });
 };
 
-export { loginUser, createUser, logoutUser, getUser, getUserPolls, userStats };
+export {
+    loginUser,
+    createUser,
+    logoutUser,
+    getUser,
+    getUserCreatedPolls,
+    userStats,
+    getUserVotedPolls,
+};

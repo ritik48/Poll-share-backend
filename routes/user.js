@@ -5,14 +5,16 @@ import {
     createUser,
     logoutUser,
     getUser,
-    getUserPolls,
+    getUserCreatedPolls,
     userStats,
+    getUserVotedPolls,
 } from "../controllers/user.js";
 import { isAuthenticated } from "../utils/auth.js";
 
 const userRouter = express.Router();
 
-userRouter.get("/user/poll/:id", isAuthenticated, asyncHandler(getUserPolls));
+userRouter.get("/user/poll/:id", isAuthenticated, asyncHandler(getUserCreatedPolls));
+userRouter.get("/user/voted/:id", isAuthenticated, asyncHandler(getUserVotedPolls));
 userRouter.post("/login", asyncHandler(loginUser));
 userRouter.post("/signup", asyncHandler(createUser));
 userRouter.get("/secret", isAuthenticated, (req, res) => {
