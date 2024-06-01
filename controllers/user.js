@@ -231,6 +231,58 @@ const getUserVotedPolls = async (req, res, next) => {
 };
 
 const userStats = async (req, res, next) => {
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - 7); // Start of current week
+
+    const endOfWeek = new Date();
+
+    const last_seven_day_stats = await Poll.aggregate([
+        {
+            $unwind: "$votes",
+        },
+        {
+            $match: {
+                "votes.votedAt": {
+                    $gte: startOfWeek,
+                    $lt: endOfWeek,
+                },
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    day: {
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: "$votes.votedAt",
+                        },
+                    },
+                    option: "$votes.option",
+                },
+                count: { $sum: 1 },
+            },
+        },
+        {
+            $group: {
+                _id: "$_id.day",
+                votes: {
+                    $push: {
+                        option: "$_id.option",
+                        count: "$count",
+                    },
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                day: "$_id",
+                votes: 1,
+            },
+        },
+        { $sort: { day: 1 } },
+    ]);
+
     // get total votes, views and total polls
     let user_polls_stats = await Poll.aggregate([
         {
@@ -253,7 +305,11 @@ const userStats = async (req, res, next) => {
         },
     ]);
 
-    res.status(200).json({ success: true, data: user_polls_stats[0] });
+    res.status(200).json({
+        success: true,
+        data: user_polls_stats[0],
+        chart_data: last_seven_day_stats,
+    });
 };
 
 export {
