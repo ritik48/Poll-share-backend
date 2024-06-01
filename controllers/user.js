@@ -233,8 +233,12 @@ const getUserVotedPolls = async (req, res, next) => {
 const userStats = async (req, res, next) => {
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - 7); // Start of current week
+    startOfWeek.setHours(startOfWeek.getHours() + 5);
+    startOfWeek.setMinutes(startOfWeek.getMinutes() + 30);
 
     const endOfWeek = new Date();
+    endOfWeek.setHours(endOfWeek.getHours() + 5);
+    endOfWeek.setMinutes(endOfWeek.getMinutes() + 30);
 
     const last_seven_day_stats = await Poll.aggregate([
         {

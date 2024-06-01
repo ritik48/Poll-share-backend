@@ -64,7 +64,7 @@ const createPoll = async (req, res, next) => {
         category,
         poll_status: poll_visibility,
     });
-  
+
     res.status(201).json({
         message: "Poll created successfully.",
         success: true,
@@ -99,13 +99,16 @@ const voteOption = async (req, res, next) => {
         );
 
         // Add the users current choice
+        const votedTime = new Date();
+        votedTime.setSeconds(votedTime.getSeconds() + 19800);
+
         poll = await Poll.findByIdAndUpdate(
             id,
             {
                 $push: {
                     votes: {
                         option: choice,
-                        votedAt: Date.now(),
+                        votedAt: votedTime,
                         user: req.user._id,
                     },
                 },
@@ -163,13 +166,16 @@ const voteOption = async (req, res, next) => {
             );
 
             // Add the users current choice
+            const votedTime = new Date();
+            votedTime.setSeconds(votedTime.getSeconds() + 19800);
+
             poll = await Poll.findByIdAndUpdate(
                 id,
                 {
                     $push: {
                         votes: {
                             option: choice,
-                            votedAt: Date.now(),
+                            votedAt: votedTime,
                             user: req.user._id,
                         },
                     },
