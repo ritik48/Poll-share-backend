@@ -240,7 +240,15 @@ const userStats = async (req, res, next) => {
     endOfWeek.setHours(endOfWeek.getHours() + 5);
     endOfWeek.setMinutes(endOfWeek.getMinutes() + 30);
 
+    console.log(startOfWeek);
+    console.log(endOfWeek);
+
     const last_seven_day_stats = await Poll.aggregate([
+        {
+            $match: {
+                user: req.user._id,
+            },
+        },
         {
             $unwind: "$votes",
         },
@@ -269,19 +277,14 @@ const userStats = async (req, res, next) => {
         {
             $group: {
                 _id: "$_id.day",
-                votes: {
-                    $push: {
-                        option: "$_id.option",
-                        count: "$count",
-                    },
-                },
+                total: { $sum: "$count" },
             },
         },
         {
             $project: {
                 _id: 0,
                 day: "$_id",
-                votes: 1,
+                total: 1,
             },
         },
         { $sort: { day: 1 } },
