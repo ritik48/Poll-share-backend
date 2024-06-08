@@ -5,16 +5,62 @@ import { ApiError } from "../utils/ApiError.js";
 
 // GET ALL POLLS
 const fetchAllPolls = async (req, res, next) => {
-    const polls = await Poll.find({}).populate("user");
+    const { q="all", visibility="all", limit=10, offset=0 } = req.query;
+
+    let visibilityQuery = {};
+    if (visibility !== "all") {
+        visibilityQuery.poll_status = visibility;
+    }
+
+    // Fetch polls and totalPolls based on (private, public, closed and active)
+
+    let totalPolls;
+    let polls;
+    if (q === "all") {
+        polls = await Poll.find({ ...visibilityQuery })
+            .populate("user")
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            ...visibilityQuery,
+        }).countDocuments();
+    } else if (q === "active") {
+        polls = await Poll.find({
+            expiresAt: { $gt: new Date() },
+            ...visibilityQuery,
+        })
+            .populate("user")
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            expiresAt: { $gt: new Date() },
+            ...visibilityQuery,
+        }).countDocuments();
+    } else if (q === "closed") {
+        polls = await Poll.find({
+            expiresAt: { $lt: new Date() },
+            ...visibilityQuery,
+        })
+            .populate("user")
+            .limit(limit)
+            .skip(offset);
+
+        totalPolls = await Poll.find({
+            expiresAt: { $lt: new Date() },
+            ...visibilityQuery,
+        }).countDocuments();
+    }
 
     // include virtuals 'formattedVote'
-    const pollsWithVirtuals = [];
-    polls.forEach((poll) => {
-        const p = poll.toObject();
-        pollsWithVirtuals.push({ ...p });
-    });
+    let pollsWithVirtuals = polls.map((poll) => poll.toObject());
 
-    res.status(200).json({ polls: pollsWithVirtuals });
+    res.status(200).json({
+        polls: pollsWithVirtuals,
+        total: totalPolls,
+        success: true,
+    });
 };
 
 // GET POLL BY ID
