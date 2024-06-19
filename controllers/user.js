@@ -3,6 +3,7 @@ import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken } from "../utils/auth.js";
+import { fillMissingDates } from "../utils/helperFunctions.js";
 
 const getUser = async (req, res) => {
     res.status(200).json({ user: req.user });
@@ -232,7 +233,7 @@ const getUserVotedPolls = async (req, res, next) => {
 
 const userStats = async (req, res, next) => {
     const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - 7); // Start of current week
+    startOfWeek.setDate(startOfWeek.getDate() - 6); // Start of current week
     startOfWeek.setHours(startOfWeek.getHours() + 5);
     startOfWeek.setMinutes(startOfWeek.getMinutes() + 30);
 
@@ -240,10 +241,7 @@ const userStats = async (req, res, next) => {
     endOfWeek.setHours(endOfWeek.getHours() + 5);
     endOfWeek.setMinutes(endOfWeek.getMinutes() + 30);
 
-    console.log(startOfWeek);
-    console.log(endOfWeek);
-
-    const last_seven_day_stats = await Poll.aggregate([
+    let last_seven_day_stats = await Poll.aggregate([
         {
             $match: {
                 user: req.user._id,
@@ -289,6 +287,12 @@ const userStats = async (req, res, next) => {
         },
         { $sort: { day: 1 } },
     ]);
+
+    last_seven_day_stats = fillMissingDates(
+        last_seven_day_stats,
+        startOfWeek,
+        endOfWeek
+    );
 
     // get total votes, views and total polls
     let user_polls_stats = await Poll.aggregate([
