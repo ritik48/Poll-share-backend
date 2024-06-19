@@ -17,3 +17,12 @@ export function fillMissingDates(array, startDate, endDate) {
     result.sort((a, b) => new Date(a.day) - new Date(b.day));
     return result;
 }
+
+export function addFiveThirtyToDate(dateStr = new Date().toISOString()) {
+    const date = new Date(dateStr);
+
+    date.setHours(date.getHours() + 5);
+    date.setMinutes(date.getMinutes() + 30);
+
+    return date;
+}

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
+import { addFiveThirtyToDate } from "../utils/helperFunctions.js";
 
 // GET ALL POLLS
 const fetchAllPolls = async (req, res, next) => {
@@ -102,11 +103,16 @@ const createPoll = async (req, res, next) => {
         throw new ApiError("Please provide at least two options", 401);
     }
 
+    // Add 5:30 to expires at and published at field
+    const updatedExpiresAt = addFiveThirtyToDate(expiresAt)
+    const publishedAt = addFiveThirtyToDate();
+
     const poll = await Poll.create({
         title,
         options,
         user: req.user._id,
-        expiresAt,
+        expiresAt: updatedExpiresAt,
+        publishedAt,
         category,
         poll_status: poll_visibility,
     });

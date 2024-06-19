@@ -53,7 +53,7 @@ const pollSchema = new Schema(
         },
         publishedAt: {
             type: Date,
-            default: Date.now,
+            required: true
         },
         expiresAt: {
             type: Date,
