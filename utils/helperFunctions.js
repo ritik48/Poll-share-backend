@@ -1,3 +1,5 @@
+import { getFormattedVote, getIsAlive, getTotalVotes } from "../models/Poll.js";
+
 export function fillMissingDates(array, startDate, endDate) {
     const result = [...array];
 
@@ -25,4 +27,20 @@ export function addFiveThirtyToDate(dateStr = new Date().toISOString()) {
     date.setMinutes(date.getMinutes() + 30);
 
     return date;
+}
+
+export function pollWithExtraProperty(polls) {
+    const modifiedPolls = JSON.parse(JSON.stringify(polls));
+
+    for (let poll of modifiedPolls) {
+        const isAlive = getIsAlive(poll);
+        const formattedVote = getFormattedVote(poll);
+        const total = getTotalVotes(poll);
+
+        poll.total = total;
+        poll.formattedVote = formattedVote;
+        poll.isAlive = isAlive;
+    }
+
+    return modifiedPolls;
 }
