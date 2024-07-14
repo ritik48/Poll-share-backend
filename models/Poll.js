@@ -53,7 +53,7 @@ const pollSchema = new Schema(
         },
         publishedAt: {
             type: Date,
-            required: true
+            required: true,
         },
         expiresAt: {
             type: Date,
@@ -63,33 +63,28 @@ const pollSchema = new Schema(
     { timestamps: true }
 );
 
-pollSchema.set("toObject", { virtuals: true });
-pollSchema.set("toJson", { virtuals: true });
-
-pollSchema.virtual("formattedVote").get(function () {
+function getFormattedVote(poll) {
     const votes = {};
-    Array.from({ length: this.options.length }, (_, i) => (votes[i] = 0));
+    Array.from({ length: poll.options.length }, (_, i) => (votes[i] = 0));
 
-    this.votes.forEach((vote) => {
+    poll.votes.forEach((vote) => {
         if (votes.hasOwnProperty(vote.option)) {
             votes[vote.option]++;
         }
     });
     return votes;
-});
+}
 
-pollSchema.virtual("isLive").get(function () {
-    const isPollLive = this.expiresAt > new Date();
-
+function getIsAlive(poll) {
+    const isPollLive = new Date(poll.expiresAt) > new Date();
     return isPollLive;
-});
+}
 
-pollSchema.virtual("totalVotes").get(function () {
-    const total = this.votes.length;
-
+function getTotalVotes(poll) {
+    const total = poll.votes.length;
     return total;
-});
+}
 
 const Poll = mongoose.model("Poll", pollSchema);
 
-export { Poll };
+export { Poll, getIsAlive, getFormattedVote, getTotalVotes };
