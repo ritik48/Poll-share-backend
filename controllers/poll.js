@@ -2,11 +2,14 @@ import mongoose from "mongoose";
 import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
-import { addFiveThirtyToDate } from "../utils/helperFunctions.js";
+import {
+    addFiveThirtyToDate,
+    pollWithExtraProperty,
+} from "../utils/helperFunctions.js";
 
 // GET ALL POLLS
 const fetchAllPolls = async (req, res, next) => {
-    const { q="all", visibility="all", limit=10, offset=0 } = req.query;
+    const { q = "all", visibility = "all", limit = 10, offset = 0 } = req.query;
 
     let visibilityQuery = {};
     if (visibility !== "all") {
@@ -55,7 +58,7 @@ const fetchAllPolls = async (req, res, next) => {
     }
 
     // include virtuals 'formattedVote'
-    let pollsWithVirtuals = polls.map((poll) => poll.toObject());
+    let pollsWithVirtuals = pollWithExtraProperty(polls);
 
     res.status(200).json({
         polls: pollsWithVirtuals,
@@ -64,20 +67,60 @@ const fetchAllPolls = async (req, res, next) => {
     });
 };
 
+// FETCH TOP 2 MOST VOTED POLLS
+const fetchTrendingPolls = async (req, res, next) => {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    let polls = await Poll.aggregate([
+        {
+            $sort: {
+                votes: -1,
+            },
+        },
+        {
+            $limit: 2,
+        },
+        {
+            $lookup: {
+                from: "users",
+                let: { userId: "$user" },
+                pipeline: [
+                    { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+                    { $project: { email: 0, password: 0, vote: 0 } },
+                ],
+                as: "userData",
+            },
+        },
+        {
+            $addFields: {
+                user: { $arrayElemAt: ["$userData", 0] },
+            },
+        },
+        {
+            $project: {
+                userData: 0,
+            },
+        },
+    ]);
+    polls = pollWithExtraProperty(polls);
+
+    console.log("tredd = ", polls);
+
+    res.status(200).json({ polls });
+};
+
 // GET POLL BY ID
 const fetchPoll = async (req, res, next) => {
     const { id } = req.params;
-    const poll = await Poll.findById(id).populate("user", "-password");
+    let poll = await Poll.findById(id).populate("user", "-password");
 
     if (!poll) {
         throw new ApiError("Cannot find this poll", 404);
     }
 
-    // include virtuals 'formattedVote'
-    const p = poll.toObject();
-    let pollsWithVirtuals = { ...p };
+    poll = pollWithExtraProperty([poll]);
 
-    res.status(200).json({ polls: pollsWithVirtuals });
+    res.status(200).json({ polls: poll[0] });
 };
 
 export const deletePoll = async (req, res, next) => {
@@ -104,7 +147,7 @@ const createPoll = async (req, res, next) => {
     }
 
     // Add 5:30 to expires at and published at field
-    const updatedExpiresAt = addFiveThirtyToDate(expiresAt)
+    const updatedExpiresAt = addFiveThirtyToDate(expiresAt);
     const publishedAt = addFiveThirtyToDate();
 
     const poll = await Poll.create({
@@ -245,4 +288,4 @@ const voteOption = async (req, res, next) => {
     });
 };
 
-export { fetchAllPolls, fetchPoll, createPoll, voteOption };
+export { fetchAllPolls, fetchPoll, createPoll, voteOption, fetchTrendingPolls };
