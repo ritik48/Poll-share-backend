@@ -3,7 +3,10 @@ import { Poll } from "../models/Poll.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken } from "../utils/auth.js";
-import { fillMissingDates } from "../utils/helperFunctions.js";
+import {
+    fillMissingDates,
+    pollWithExtraProperty,
+} from "../utils/helperFunctions.js";
 
 const getUser = async (req, res) => {
     res.status(200).json({ user: req.user });
@@ -152,7 +155,7 @@ const getUserCreatedPolls = async (req, res, next) => {
     }
 
     // include virtuals 'formattedVote'
-    let pollsWithVirtuals = polls.map((poll) => poll.toObject());
+    let pollsWithVirtuals = pollWithExtraProperty(polls);
 
     res.status(200).json({
         success: true,
@@ -222,7 +225,7 @@ const getUserVotedPolls = async (req, res, next) => {
     }
 
     // // include virtuals 'formattedVote'
-    let pollsWithVirtuals = polls.map((poll) => poll.toObject());
+    let pollsWithVirtuals = pollWithExtraProperty(polls);
 
     res.status(200).json({
         success: true,
