@@ -100,7 +100,7 @@ const logoutUser = async (req, res, next) => {
 
 const getUserCreatedPolls = async (req, res, next) => {
     const { id } = req.params;
-    const { q, visibility, limit, offset } = req.query;
+    const { q, visibility, limit, offset, search } = req.query;
 
     if (!id) {
         throw new ApiError("User not provided", 401);
@@ -111,24 +111,35 @@ const getUserCreatedPolls = async (req, res, next) => {
         visibilityQuery.poll_status = visibility;
     }
 
+    let searchQuery = {};
+    if (search) {
+        searchQuery.title = { $regex: search, $options: "i" };
+    }
+
     // Fetch polls and totalPolls based on (private, public, closed and active)
 
     let totalPolls;
     let polls;
     if (q === "all") {
-        polls = await Poll.find({ user: id, ...visibilityQuery })
+        polls = await Poll.find({
+            user: id,
+            ...visibilityQuery,
+            ...searchQuery,
+        })
             .limit(limit)
             .skip(offset);
 
         totalPolls = await Poll.find({
             user: id,
             ...visibilityQuery,
+            ...searchQuery,
         }).countDocuments();
     } else if (q === "active") {
         polls = await Poll.find({
             user: id,
             expiresAt: { $gt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         })
             .limit(limit)
             .skip(offset);
@@ -137,12 +148,14 @@ const getUserCreatedPolls = async (req, res, next) => {
             user: id,
             expiresAt: { $gt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         }).countDocuments();
     } else if (q === "closed") {
         polls = await Poll.find({
             user: id,
             expiresAt: { $lt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         })
             .limit(limit)
             .skip(offset);
@@ -151,6 +164,7 @@ const getUserCreatedPolls = async (req, res, next) => {
             user: id,
             expiresAt: { $lt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         }).countDocuments();
     }
 
@@ -167,7 +181,13 @@ const getUserCreatedPolls = async (req, res, next) => {
 const getUserVotedPolls = async (req, res, next) => {
     const { id } = req.params;
 
-    const { q = "all", visibility = "all", limit = 5, offset = 0 } = req.query;
+    const {
+        q = "all",
+        visibility = "all",
+        limit = 5,
+        offset = 0,
+        search,
+    } = req.query;
 
     if (!id) {
         throw new ApiError("User not provided", 401);
@@ -178,12 +198,21 @@ const getUserVotedPolls = async (req, res, next) => {
         visibilityQuery.poll_status = visibility;
     }
 
+    let searchQuery = {};
+    if (search) {
+        searchQuery.title = { $regex: search, $options: "i" };
+    }
+
     // Fetch user voted polls and totalPolls based on (private, public, closed and active)
 
     let totalPolls;
     let polls;
     if (q === "all") {
-        polls = await Poll.find({ "votes.user": id, ...visibilityQuery })
+        polls = await Poll.find({
+            "votes.user": id,
+            ...visibilityQuery,
+            ...searchQuery,
+        })
             .populate("user", "-password")
             .limit(limit)
             .skip(offset);
@@ -191,12 +220,14 @@ const getUserVotedPolls = async (req, res, next) => {
         totalPolls = await Poll.find({
             "votes.user": id,
             ...visibilityQuery,
+            ...searchQuery,
         }).countDocuments();
     } else if (q === "active") {
         polls = await Poll.find({
             "votes.user": id,
             expiresAt: { $gt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         })
             .populate("user", "-password")
             .limit(limit)
@@ -206,12 +237,14 @@ const getUserVotedPolls = async (req, res, next) => {
             "votes.user": id,
             expiresAt: { $gt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         }).countDocuments();
     } else if (q === "closed") {
         polls = await Poll.find({
             "votes.user": id,
             expiresAt: { $lt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         })
             .populate("user", "-password")
             .limit(limit)
@@ -221,6 +254,7 @@ const getUserVotedPolls = async (req, res, next) => {
             "votes.user": id,
             expiresAt: { $lt: new Date() },
             ...visibilityQuery,
+            ...searchQuery,
         }).countDocuments();
     }
 
