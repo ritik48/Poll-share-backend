@@ -69,7 +69,7 @@ const fetchAllPolls = async (req, res, next) => {
 
 // FETCH TOP 2 MOST VOTED POLLS
 const fetchTrendingPolls = async (req, res, next) => {
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    // await new Promise((resolve) => setTimeout(resolve, 5000));
 
     let polls = await Poll.aggregate([
         {
